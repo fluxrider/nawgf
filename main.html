@@ -14,6 +14,7 @@ function my_fullscreen() {
   //alert(window.document.fullscreenEnabled);
   //alert(window.document.fullscreenElement); // non null, you are in fullscreen
   let canvas = document.getElementById("my_canvas");
+  canvas.style.border = 0; // TODO restore on error or on return
   canvas.requestFullscreen().catch(err => {
     alert("Error attempting to enable full-screen mode: " + err.message + " " + err.name);
   });
@@ -22,11 +23,32 @@ function my_fill() {
   let canvas = document.getElementById("my_canvas");
   canvas.style.width = "100vw";
   canvas.style.height = "100vh";
-  document.body.style.margin = 0;
-  document.body.style.padding = 0;
-  canvas.style.border = 0;
+  canvas.style.border = 0; // TODO restore on unfill
+  document.body.style.margin = 0; document.body.style.padding = 0;
   // TODO it fits like a glove (in my test env chromium), but if you resize, it has sliders, but if you go fullscreen and come back it fixes itself...
   // TODO respect aspect ratio of canvas buffer
+  let W = canvas.clientWidth; H = canvas.clientHeight;
+  let w = canvas.width; h = canvas.height;
+  let a = w / h;
+  let A = W / H;
+  let offsetX = 0;
+  let offsetY = 0;
+  let aspectW = W;
+  let aspectH = H;
+  // top/down black bars
+  if (a / A > 1) {
+    aspectH = W * h / w;
+    offsetY = (H - aspectH) / 2;
+  }
+  // left/right black bars
+  else {
+    aspectW = H * w / h;
+    offsetX = (W - aspectW) / 2;
+  }
+  // set
+  canvas.style.width = (aspectW / W * 100) + "vw";
+  canvas.style.height = (aspectH / H * 100) + "vh";
+  // TODO this needs to be redone on document resize
 }
 function my_render() {
   var canvas = document.getElementById("my_canvas");
@@ -55,7 +77,7 @@ function my_render() {
 }
 </script>
 </head><body>
-<canvas id="my_canvas" width="100" height="100" style="border:1px solid #000000;"/></canvas>
+<canvas id="my_canvas" width="100" height="100" style="border:1px solid #FF0000;"/></canvas>
 <p onclick="my_render();">render</p>
 <p onclick="my_fullscreen();">fullscreen</p>
 <p onclick="my_fill();">fill</p>
