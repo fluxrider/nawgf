@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1" />
+<title>Demo</title>
+<style>
+#my_canvas {  
+  width: 512px;
+  height: 512px;
+  image-rendering: pixelated; // other
+  image-rendering: crisp-edges; // firefox
+}
+</style>
+<script>
+function my_test() {
+  //alert(window.document.fullscreenEnabled);
+  //alert(window.document.fullscreenElement); // non null, you are in fullscreen
+
+  let elem = document.getElementById("my_canvas");
+  elem.requestFullscreen().catch(err => {
+    alert("Error attempting to enable full-screen mode: " + err.message + " " + err.name);
+  });
+}
+function my_render() {
+  var c = document.getElementById("my_canvas");
+  var ctx = c.getContext("2d");
+
+  // Create gradient
+  var grd = ctx.createLinearGradient(0, 0, 200, 0);
+  grd.addColorStop(0, "red");
+  grd.addColorStop(1, "white");
+
+  // Fill with gradient
+  ctx.fillStyle = grd;
+  ctx.fillRect(10, 10, 80, 80);
+  
+  //ctx.imageSmoothingEnabled = false;
+  // canvas.width  = window.innerWidth;
+  // canvas.height = window.innerHeight;
+  var image = new Image();
+  image.onload = function () {
+      ctx.drawImage(image, 0, 0);
+  }
+  //image.src = 'cat.png';
+
+}
+</script>
+</head><body>
+<canvas id="my_canvas" width="100" height="100" style="border:1px solid #000000;">
+Your browser does not support the HTML canvas tag.
+</canvas>
+<p onclick="my_render();">Click me</p>
+<p onclick="my_test();">Click me 2</p>
+</body></html>
