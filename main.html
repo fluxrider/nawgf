@@ -41,7 +41,8 @@ function my_fill_toggle() {
     canvas.style.height = "512px";
     let is_fullscreen = document.fullscreenElement != null;
     canvas.style.border = is_fullscreen? 0 : "1px solid rgb(255, 0, 0)";
-    // TODO margin/padding
+    // reset margin and padding
+    document.body.style.margin = ""; document.body.style.padding = "";
   }
   // fill window
   else {
@@ -55,8 +56,8 @@ function my_fill() {
   let canvas = document.getElementById("my_canvas");
   canvas.style.width = "100vw";
   canvas.style.height = "100vh";
-  // TODO it fits like a glove (in my test env chromium), but if you resize, it has sliders, but if you go fullscreen and come back it fixes itself...
-  // TODO respect aspect ratio of canvas buffer
+
+  // respect aspect ratio of canvas buffer
   let W = canvas.clientWidth; H = canvas.clientHeight;
   let w = canvas.width; h = canvas.height;
   let a = w / h;
