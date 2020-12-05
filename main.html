@@ -10,21 +10,51 @@
 }
 </style>
 <script>
-function my_fullscreen() {
-  //alert(window.document.fullscreenEnabled);
-  //alert(window.document.fullscreenElement); // non null, you are in fullscreen
+is_fill = false;
+
+function my_onload() {
   let canvas = document.getElementById("my_canvas");
-  canvas.style.border = 0; // TODO restore on error or on return
+  canvas.addEventListener('fullscreenchange', (event) => {
+    // on enter fullscreen
+    if(document.fullscreenElement) {
+      canvas.style.border = 0;
+    }
+    // on exit fullscreen
+    else {
+      canvas.style.border = is_fill? 0 : "1px solid rgb(255, 0, 0)";
+    }
+  });
+}
+
+function my_fullscreen() {
+  //alert(document.fullscreenEnabled);
+  let canvas = document.getElementById("my_canvas");
   canvas.requestFullscreen().catch(err => {
     alert("Error attempting to enable full-screen mode: " + err.message + " " + err.name);
   });
+}
+function my_fill_toggle() {
+  let canvas = document.getElementById("my_canvas");
+  // unfill window
+  if(is_fill) {
+    canvas.style.width = "512px";
+    canvas.style.height = "512px";
+    let is_fullscreen = document.fullscreenElement != null;
+    canvas.style.border = is_fullscreen? 0 : "1px solid rgb(255, 0, 0)";
+    // TODO margin/padding
+  }
+  // fill window
+  else {
+    canvas.style.border = 0;
+    document.body.style.margin = 0; document.body.style.padding = 0;
+    my_fill();
+  }
+  is_fill = !is_fill;
 }
 function my_fill() {
   let canvas = document.getElementById("my_canvas");
   canvas.style.width = "100vw";
   canvas.style.height = "100vh";
-  canvas.style.border = 0; // TODO restore on unfill
-  document.body.style.margin = 0; document.body.style.padding = 0;
   // TODO it fits like a glove (in my test env chromium), but if you resize, it has sliders, but if you go fullscreen and come back it fixes itself...
   // TODO respect aspect ratio of canvas buffer
   let W = canvas.clientWidth; H = canvas.clientHeight;
@@ -48,7 +78,6 @@ function my_fill() {
   // set
   canvas.style.width = (aspectW / W * 100) + "vw";
   canvas.style.height = (aspectH / H * 100) + "vh";
-  // TODO this needs to be redone on document resize
 }
 function my_render() {
   var canvas = document.getElementById("my_canvas");
@@ -65,20 +94,26 @@ function my_render() {
   g.fillStyle = grd;
   g.fillRect(10, 10, 80, 80);
   
-  //ctx.imageSmoothingEnabled = false;
-  // canvas.width  = window.innerWidth;
-  // canvas.height = window.innerHeight;
   var image = new Image();
   image.onload = function () {
     g.drawImage(image, 0, 0);
   }
   //image.src = 'cat.png';
-
 }
+
+function my_window_resize() {
+  let is_fullscreen = document.fullscreenElement != null;
+  if(is_fullscreen) {
+  } else if(is_fill) {
+    my_fill();
+  }
+}
+window.addEventListener("resize", my_window_resize);
+
 </script>
-</head><body>
+</head><body onload="my_onload();">
 <canvas id="my_canvas" width="100" height="100" style="border:1px solid #FF0000;"/></canvas>
 <p onclick="my_render();">render</p>
 <p onclick="my_fullscreen();">fullscreen</p>
-<p onclick="my_fill();">fill</p>
+<p onclick="my_fill_toggle();">fill</p>
 </body></html>
