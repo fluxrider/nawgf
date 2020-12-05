@@ -13,41 +13,42 @@
 function my_fullscreen() {
   //alert(window.document.fullscreenEnabled);
   //alert(window.document.fullscreenElement); // non null, you are in fullscreen
-
-  let elem = document.getElementById("my_canvas");
-  elem.requestFullscreen().catch(err => {
+  let canvas = document.getElementById("my_canvas");
+  canvas.requestFullscreen().catch(err => {
     alert("Error attempting to enable full-screen mode: " + err.message + " " + err.name);
   });
 }
 function my_fill() {
-  let elem = document.getElementById("my_canvas");
-  elem.style.width = "100vw";
-  elem.style.height = "100vh";
+  let canvas = document.getElementById("my_canvas");
+  canvas.style.width = "100vw";
+  canvas.style.height = "100vh";
   document.body.style.margin = 0;
   document.body.style.padding = 0;
-  elem.style.border = 0;
+  canvas.style.border = 0;
+  // TODO it fits like a glove (in my test env chromium), but if you resize, it has sliders, but if you go fullscreen and come back it fixes itself...
+  // TODO respect aspect ratio of canvas buffer
 }
 function my_render() {
-  var c = document.getElementById("my_canvas");
-  var ctx = c.getContext("2d");
+  var canvas = document.getElementById("my_canvas");
+  var g = canvas.getContext("2d");
 
   // Create gradient
-  var grd = ctx.createLinearGradient(0, 0, 200, 0);
+  var grd = g.createLinearGradient(0, 0, 200, 0);
   grd.addColorStop(0, "red");
   grd.addColorStop(1, "white");
 
   // Fill with gradient
-  ctx.fillStyle = 'green';
-  ctx.fillRect(0, 0, 100, 100);
-  ctx.fillStyle = grd;
-  ctx.fillRect(10, 10, 80, 80);
+  g.fillStyle = 'green';
+  g.fillRect(0, 0, 100, 100);
+  g.fillStyle = grd;
+  g.fillRect(10, 10, 80, 80);
   
   //ctx.imageSmoothingEnabled = false;
   // canvas.width  = window.innerWidth;
   // canvas.height = window.innerHeight;
   var image = new Image();
   image.onload = function () {
-    ctx.drawImage(image, 0, 0);
+    g.drawImage(image, 0, 0);
   }
   //image.src = 'cat.png';
 
