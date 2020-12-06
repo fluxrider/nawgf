@@ -11,6 +11,7 @@
 </style>
 <script>
 is_fill = false;
+key_held = false;
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
@@ -81,14 +82,19 @@ function my_fill() {
   canvas.style.height = (aspectH / H * 100) + "vh";
   // use to work perfectly with a square 100x100 canvas, but has sliders when I use 510x270
 }
-function my_render() {
-  var canvas = document.getElementById("my_canvas");
+
+frame = 0;
+t0 = null;
+function my_render(t1) {
+  let canvas = document.getElementById("my_canvas");
   let w = canvas.width;
   let h = canvas.height;
-  var g = canvas.getContext("2d");
+  let g = canvas.getContext("2d");
+  if(!t0) t0 = t1;
+  let dt = (t1 - t0) / 1000;
 
   // Create gradient
-  var grd = g.createLinearGradient(0, 0, w, 0);
+  let grd = g.createLinearGradient(0, 0, w, 0);
   grd.addColorStop(0, "red");
   grd.addColorStop(1, "white");
 
@@ -98,11 +104,20 @@ function my_render() {
   g.fillStyle = grd;
   g.fillRect(10, 10, w - 20, h - 20);
   
-  var image = new Image();
-  image.onload = function () {
-    g.drawImage(image, 0, 0);
-  }
+  //var image = new Image();
+  //image.onload = function () {
+  //  g.drawImage(image, 0, 0);
+  //}
   //image.src = 'cat.png';
+
+  g.strokeStyle = "blue";
+  g.strokeText("key held: " + key_held, 30, 30);
+  g.strokeText("frame: " + frame++, 30, 60);
+  g.strokeText("t: " + t1, 30, 90);
+  g.strokeText(`dt: ${dt.toFixed(3)} (${(1/dt).toFixed(1)})`, 30, 120);
+
+  requestAnimationFrame(my_render);
+  t0 = t1;
 }
 
 function my_window_resize() {
@@ -114,10 +129,25 @@ function my_window_resize() {
 }
 window.addEventListener("resize", my_window_resize);
 
+function my_keydown(event) {
+  if(event.keyCode == 39) {
+    key_held = true;
+    event.preventDefault();
+  }
+}
+function my_keyup(event) {
+  if(event.keyCode == 39) {
+    key_held = false;
+    event.preventDefault();
+  }
+}
+
+document.addEventListener('keydown', my_keydown);
+document.addEventListener('keyup', my_keyup);
 </script>
 </head><body onload="my_onload();">
 <canvas id="my_canvas" width="510" height="270" style="border:1px solid #FF0000;"/></canvas>
-<p onclick="my_render();">render</p>
+<p onclick="requestAnimationFrame(my_render);">render</p>
 <p onclick="my_fullscreen();">fullscreen</p>
 <p onclick="my_fill_toggle();">fill</p>
 </body></html>
