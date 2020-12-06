@@ -3,8 +3,8 @@
 <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1" />
 <title>Demo</title>
 <style>
-#my_canvas {  
-  width: 512px; height: 512px;
+#my_canvas {
+  width: 510px; height: 270px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
@@ -37,8 +37,8 @@ function my_fill_toggle() {
   let canvas = document.getElementById("my_canvas");
   // unfill window
   if(is_fill) {
-    canvas.style.width = "512px";
-    canvas.style.height = "512px";
+    canvas.style.width = "510px";
+    canvas.style.height = "270px";
     let is_fullscreen = document.fullscreenElement != null;
     canvas.style.border = is_fullscreen? 0 : "1px solid rgb(255, 0, 0)";
     // reset margin and padding
@@ -79,21 +79,24 @@ function my_fill() {
   // set
   canvas.style.width = (aspectW / W * 100) + "vw";
   canvas.style.height = (aspectH / H * 100) + "vh";
+  // use to work perfectly with a square 100x100 canvas, but has sliders when I use 510x270
 }
 function my_render() {
   var canvas = document.getElementById("my_canvas");
+  let w = canvas.width;
+  let h = canvas.height;
   var g = canvas.getContext("2d");
 
   // Create gradient
-  var grd = g.createLinearGradient(0, 0, 200, 0);
+  var grd = g.createLinearGradient(0, 0, w, 0);
   grd.addColorStop(0, "red");
   grd.addColorStop(1, "white");
 
   // Fill with gradient
   g.fillStyle = 'green';
-  g.fillRect(0, 0, 100, 100);
+  g.fillRect(0, 0, w, h);
   g.fillStyle = grd;
-  g.fillRect(10, 10, 80, 80);
+  g.fillRect(10, 10, w - 20, h - 20);
   
   var image = new Image();
   image.onload = function () {
@@ -113,7 +116,7 @@ window.addEventListener("resize", my_window_resize);
 
 </script>
 </head><body onload="my_onload();">
-<canvas id="my_canvas" width="100" height="100" style="border:1px solid #FF0000;"/></canvas>
+<canvas id="my_canvas" width="510" height="270" style="border:1px solid #FF0000;"/></canvas>
 <p onclick="my_render();">render</p>
 <p onclick="my_fullscreen();">fullscreen</p>
 <p onclick="my_fill_toggle();">fill</p>
