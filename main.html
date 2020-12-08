@@ -39,7 +39,6 @@ function my_onload() {
     // TODO precalculate taking into account fullscreen letterbox
     let W = canvas.clientWidth; let H = canvas.clientHeight;
     if(document.fullscreenElement) {
-      debug_msg = `${aspect.h} ${aspect.w} ${aspect.y} ${aspect.x} `;
       W = aspect.w; H = aspect.h;
       mouse_y -= aspect.y;
       mouse_x -= aspect.x;
@@ -49,7 +48,6 @@ function my_onload() {
     mouse_x = mouse_x * canvas.width / W;
     if(mouse_x < 0) mouse_x = 0; if(mouse_x > canvas.width) mouse_x = canvas.width;
     if(mouse_y < 0) mouse_y = 0; if(mouse_y > canvas.height) mouse_y = canvas.height;
-    //debug_msg = `py: ${event.pageY} ot: ${canvas.offsetTop} ct: ${canvas.clientTop} bh: ${canvas.height} vh: ${canvas.style.height} ch: ${canvas.clientHeight} sh: ${screen.height} cy: ${event.clientY}`;
   });
 }
 
@@ -118,6 +116,24 @@ function calculate_fill(w, h, W, H) {
 frame = 0;
 t0 = null;
 function my_render(t1) {
+  // input
+  const gamepads = navigator.getGamepads();
+  debug_msg = "";
+  for(const gamepad of gamepads) {
+    if(!(gamepad && gamepad.connected)) continue;
+    debug_msg += gamepad.id + " " + gamepad.mapping + " " + gamepad.buttons[0].pressed;
+    // gamepad.id example:
+    //  chromium: "8BitDo N30 Pro 2 (Vendor: 2dc8 Product: 2865)"
+    //  firefox: "2dc8-2865-8BitDo N30 Pro 2"
+    // on my end there is no mapping (i.e. it is not set to "standard", and buttons[0] is east instead of south)
+    // it should be possible to match an SDL2 mapping. You can see the vendor/product bytes in there
+    // 05000000c82d00006528000000010000,8BitDo N30 Pro 2,a:b1,b:b0,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b4,y:b3,platform:Linux,
+    // fun fun, the SDL names are pretty lame/non-descript/xbox-loving (e.g. a, b) and the web "standard" mapping don't even have names.
+    // but SDL south is called a, east -- b, north -- y, select -- back, closest shoulder -- leftshoulder, far shoulder -- lefttrigger, stick button -- leftstick, the rest is obvious enough
+    // the web "standard" numbers can be found at https://www.w3.org/TR/gamepad/standard_gamepad.svg
+  }
+
+  // gfx
   let canvas = document.getElementById("my_canvas");
   let w = canvas.width;
   let h = canvas.height;
