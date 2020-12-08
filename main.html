@@ -16,6 +16,7 @@ is_fill = false;
 key_held = false;
 mouse_y = 0;
 mouse_x = 0;
+debug_msg = "";
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
@@ -29,10 +30,25 @@ function my_onload() {
       canvas.style.border = is_fill? 0 : "1px solid rgb(255, 0, 0)";
     }
   });
+  // mouse
   canvas.addEventListener('mousemove', function(event) {
-    // TODO fullscreen letterbox need to be accounted for
     mouse_y = event.pageY - (canvas.offsetTop + canvas.clientTop);
     mouse_x = event.pageX - (canvas.offsetLeft + canvas.clientLeft);
+    // TODO precalculate taking into account fullscreen letterbox
+    let W = canvas.clientWidth; let H = canvas.clientHeight;
+    if(document.fullscreenElement) {
+      const {aspectH, aspectW, offsetY, offsetX} = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
+      debug_msg = `${aspectH} ${aspectW} ${offsetY} ${offsetX} `;
+      W = aspectW; H = aspectH;
+      mouse_y -= offsetY;
+      mouse_x -= offsetX;
+    }
+    // normalize
+    mouse_y = mouse_y * canvas.height / H;
+    mouse_x = mouse_x * canvas.width / W;
+    if(mouse_x < 0) mouse_x = 0; if(mouse_x > canvas.width) mouse_x = canvas.width;
+    if(mouse_y < 0) mouse_y = 0; if(mouse_y > canvas.height) mouse_y = canvas.height;
+    //debug_msg = `py: ${event.pageY} ot: ${canvas.offsetTop} ct: ${canvas.clientTop} bh: ${canvas.height} vh: ${canvas.style.height} ch: ${canvas.clientHeight} sh: ${screen.height} cy: ${event.clientY}`;
   });
 }
 
@@ -49,8 +65,7 @@ function my_fill_toggle() {
   if(is_fill) {
     canvas.style.width = "510px";
     canvas.style.height = "270px";
-    let is_fullscreen = document.fullscreenElement != null;
-    canvas.style.border = is_fullscreen? 0 : "1px solid rgb(255, 0, 0)";
+    canvas.style.border = (document.fullscreenElement != null)? 0 : "1px solid rgb(255, 0, 0)";
     // reset margin and padding
     document.body.style.margin = ""; document.body.style.padding = "";
   }
@@ -68,8 +83,13 @@ function my_fill() {
   canvas.style.height = "100vh";
 
   // respect aspect ratio of canvas buffer
-  let W = canvas.clientWidth; H = canvas.clientHeight;
-  let w = canvas.width; h = canvas.height;
+  const {aspectH, aspectW, offsetY, offsetX} = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
+  canvas.style.width = (aspectW / canvas.clientWidth * 100) + "vw";
+  canvas.style.height = (aspectH / canvas.clientHeight * 100) + "vh";
+  // TODO this is sometime flush, but in other times there are sliders
+}
+
+function calculate_fill(w, h, W, H) {
   let a = w / h;
   let A = W / H;
   let offsetX = 0;
@@ -86,10 +106,12 @@ function my_fill() {
     aspectW = H * w / h;
     offsetX = (W - aspectW) / 2;
   }
-  // set
-  canvas.style.width = (aspectW / W * 100) + "vw";
-  canvas.style.height = (aspectH / H * 100) + "vh";
-  // use to work perfectly with a square 100x100 canvas, but has sliders when I use 510x270
+  return {
+    aspectH: aspectH,
+    aspectW: aspectW,
+    offsetY: offsetY,
+    offsetX: offsetX
+  };
 }
 
 frame = 0;
@@ -128,36 +150,33 @@ function my_render(t1) {
   g.fillText("t: " + t1, 30, 90);
   g.fillText(`dt: ${dt.toFixed(3)} (${(1/dt).toFixed(1)})`, 30, 120);
   g.fillText(`mouse: ${mouse_x}, ${mouse_y}`, 30, 150);
-
+  g.fillText(`debug: ${debug_msg}`, 30, 180);
 
   requestAnimationFrame(my_render);
   t0 = t1;
 }
 
-function my_window_resize() {
+window.addEventListener('resize', function() {
   let is_fullscreen = document.fullscreenElement != null;
   if(is_fullscreen) {
   } else if(is_fill) {
     my_fill();
   }
-}
-window.addEventListener("resize", my_window_resize);
+});
 
-function my_keydown(event) {
+document.addEventListener('keydown', function my_keydown(event) {
   if(event.keyCode == 39) {
     key_held = true;
     event.preventDefault();
   }
-}
-function my_keyup(event) {
+});
+document.addEventListener('keyup', function my_keyup(event) {
   if(event.keyCode == 39) {
     key_held = false;
     event.preventDefault();
   }
-}
+});
 
-document.addEventListener('keydown', my_keydown);
-document.addEventListener('keyup', my_keyup);
 </script>
 </head><body onload="my_onload();">
 <canvas id="my_canvas" width="510" height="270" style="border:1px solid #FF0000;"/></canvas>
