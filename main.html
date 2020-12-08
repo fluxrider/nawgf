@@ -17,6 +17,7 @@ key_held = false;
 mouse_y = 0;
 mouse_x = 0;
 debug_msg = "";
+aspect = null;
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
@@ -24,6 +25,7 @@ function my_onload() {
     // on enter fullscreen
     if(document.fullscreenElement) {
       canvas.style.border = 0;
+      aspect = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
     }
     // on exit fullscreen
     else {
@@ -37,11 +39,10 @@ function my_onload() {
     // TODO precalculate taking into account fullscreen letterbox
     let W = canvas.clientWidth; let H = canvas.clientHeight;
     if(document.fullscreenElement) {
-      const {aspectH, aspectW, offsetY, offsetX} = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
-      debug_msg = `${aspectH} ${aspectW} ${offsetY} ${offsetX} `;
-      W = aspectW; H = aspectH;
-      mouse_y -= offsetY;
-      mouse_x -= offsetX;
+      debug_msg = `${aspect.h} ${aspect.w} ${aspect.y} ${aspect.x} `;
+      W = aspect.w; H = aspect.h;
+      mouse_y -= aspect.y;
+      mouse_x -= aspect.x;
     }
     // normalize
     mouse_y = mouse_y * canvas.height / H;
@@ -107,10 +108,10 @@ function calculate_fill(w, h, W, H) {
     offsetX = (W - aspectW) / 2;
   }
   return {
-    aspectH: aspectH,
-    aspectW: aspectW,
-    offsetY: offsetY,
-    offsetX: offsetX
+    h: aspectH,
+    w: aspectW,
+    y: offsetY,
+    x: offsetX
   };
 }
 
@@ -159,6 +160,8 @@ function my_render(t1) {
 window.addEventListener('resize', function() {
   let is_fullscreen = document.fullscreenElement != null;
   if(is_fullscreen) {
+    let canvas = document.getElementById("my_canvas");
+    aspect = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
   } else if(is_fill) {
     my_fill();
   }
