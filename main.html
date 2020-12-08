@@ -14,6 +14,8 @@
 <script>
 is_fill = false;
 key_held = false;
+mouse_y = 0;
+mouse_x = 0;
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
@@ -26,6 +28,11 @@ function my_onload() {
     else {
       canvas.style.border = is_fill? 0 : "1px solid rgb(255, 0, 0)";
     }
+  });
+  canvas.addEventListener('mousemove', function(event) {
+    // TODO fullscreen letterbox need to be accounted for
+    mouse_y = event.pageY - (canvas.offsetTop + canvas.clientTop);
+    mouse_x = event.pageX - (canvas.offsetLeft + canvas.clientLeft);
   });
 }
 
@@ -120,6 +127,8 @@ function my_render(t1) {
   g.strokeText("t: " + t1, 30, 90);
   g.fillText("t: " + t1, 30, 90);
   g.fillText(`dt: ${dt.toFixed(3)} (${(1/dt).toFixed(1)})`, 30, 120);
+  g.fillText(`mouse: ${mouse_x}, ${mouse_y}`, 30, 150);
+
 
   requestAnimationFrame(my_render);
   t0 = t1;
