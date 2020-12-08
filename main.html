@@ -121,7 +121,7 @@ function my_render(t1) {
   debug_msg = "";
   for(const gamepad of gamepads) {
     if(!(gamepad && gamepad.connected)) continue;
-    debug_msg += gamepad.id + " " + gamepad.mapping + " " + gamepad.buttons[0].pressed;
+    //debug_msg += gamepad.id + " " + gamepad.mapping + " " + gamepad.buttons[0].pressed;
     // gamepad.id example:
     //  chromium: "8BitDo N30 Pro 2 (Vendor: 2dc8 Product: 2865)"
     //  firefox: "2dc8-2865-8BitDo N30 Pro 2"
@@ -129,8 +129,38 @@ function my_render(t1) {
     // it should be possible to match an SDL2 mapping. You can see the vendor/product bytes in there
     // 05000000c82d00006528000000010000,8BitDo N30 Pro 2,a:b1,b:b0,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b4,y:b3,platform:Linux,
     // fun fun, the SDL names are pretty lame/non-descript/xbox-loving (e.g. a, b) and the web "standard" mapping don't even have names.
-    // but SDL south is called a, east -- b, north -- y, select -- back, closest shoulder -- leftshoulder, far shoulder -- lefttrigger, stick button -- leftstick, the rest is obvious enough
+    // but SDL south is called a, east -- b, north -- y, select -- back, L1 -- leftshoulder, L2 -- lefttrigger, L3 -- leftstick, the rest is obvious enough
     // the web "standard" numbers can be found at https://www.w3.org/TR/gamepad/standard_gamepad.svg
+    let mapping = null;
+    if(!gamepad.mapping) {
+    }
+    if(!mapping) {
+      // cross our fingers falling back to the "standard" mapping
+      mapping = {
+        up: gamepad.buttons.length >= 13? gamepad.buttons[12].pressed : false,
+        down: gamepad.buttons.length >= 14? gamepad.buttons[13].pressed : false,
+        left: gamepad.buttons.length >= 15? gamepad.buttons[14].pressed : false,
+        right: gamepad.buttons.length >= 16? gamepad.buttons[15].pressed : false,
+        north: gamepad.buttons.length >= 4? gamepad.buttons[3].pressed : false,
+        south: gamepad.buttons.length >= 1? gamepad.buttons[0].pressed : false,
+        west: gamepad.buttons.length >= 3? gamepad.buttons[2].pressed : false,
+        east: gamepad.buttons.length >= 2? gamepad.buttons[1].pressed : false,
+        start: gamepad.buttons.length >= 10? gamepad.buttons[9].pressed : false,
+        select: gamepad.buttons.length >= 9? gamepad.buttons[8].pressed : false,
+        L1: gamepad.buttons.length >= 5? gamepad.buttons[4].pressed : false,
+        L2: gamepad.buttons.length >= 7? gamepad.buttons[6] : 0,
+        L3: gamepad.buttons.length >= 11? gamepad.buttons[10].pressed : false,
+        R1: gamepad.buttons.length >= 6? gamepad.buttons[5].pressed : false,
+        R2: gamepad.buttons.length >= 8? gamepad.buttons[7] : 0,
+        R3: gamepad.buttons.length >= 12? gamepad.buttons[11].pressed : false,
+        LX: gamepad.axes.length >= 1? gamepad.axes[0] : 0,
+        LY: gamepad.axes.length >= 2? gamepad.axes[1] : 0,
+        RX: gamepad.axes.length >= 3? gamepad.axes[2] : 0,
+        RY: gamepad.axes.length >= 4? gamepad.axes[3] : 0,
+        HOME: gamepad.buttons.length >= 17? gamepad.buttons[16].pressed : false
+      };
+    }
+    debug_msg += "south: " + mapping.south + " LY: " + mapping.LY;
   }
 
   // gfx
