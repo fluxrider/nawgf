@@ -133,6 +133,7 @@ function my_render(t1) {
     // but SDL south is called a, east -- b, north -- y, select -- back, L1 -- leftshoulder, L2 -- lefttrigger, L3 -- leftstick, the rest is obvious enough
     // the web "standard" numbers can be found at https://www.w3.org/TR/gamepad/standard_gamepad.svg
     let mapping = null;
+    debug_msg = "";
     if(!gamepad.mapping && gamecontrollerdb) {
       let OS = 'Linux';
 // TODO navigator.userAgent
@@ -163,11 +164,9 @@ function my_render(t1) {
           }
           if(!line) line = m[1]; // pick the first OS if none matched
         }
-        debug_msg = line;
+        //debug_msg = line;
 
         // parse SDL mapping, converting it to mine
-        // the hat is problematic, because the web gamepad API does not expose the names of the axes
-        // a:b1,b:b0,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b4,y:b3
         if(line) {
           mapping = {
             up: false,
@@ -203,16 +202,58 @@ function my_render(t1) {
             if(axis || button) {
               index = parseInt(parts[1].slice(1));
             } else if(hat) {
-              index = parseFloat(parts[1].slice(1));
+              index = Math.trunc(parseFloat(parts[1].slice(1)) * 10);
             }
             if(button && index >= gamepad.buttons.length) continue;
             if(axis && index >= gamepad.axes.length) continue;
             // switch on SDL mapping
-            switch(parts[0]) {
-              case 'a': mapping.south = gamepad.buttons[index].pressed; break;
-              case 'b': mapping.east = gamepad.buttons[index].pressed; break;
-              case 'x': mapping.west = gamepad.buttons[index].pressed; break;
-              case 'y': mapping.north = gamepad.buttons[index].pressed; break;
+            if(button) {
+              switch(parts[0]) {
+                case 'a': mapping.south = gamepad.buttons[index].pressed; break;
+                case 'b': mapping.east = gamepad.buttons[index].pressed; break;
+                case 'x': mapping.west = gamepad.buttons[index].pressed; break;
+                case 'y': mapping.north = gamepad.buttons[index].pressed; break;
+                case 'back': mapping.select = gamepad.buttons[index].pressed; break;
+                case 'start': mapping.start = gamepad.buttons[index].pressed; break;
+                case 'dpup': mapping.up = gamepad.buttons[index].pressed; break;
+                case 'dpdown': mapping.down = gamepad.buttons[index].pressed; break;
+                case 'dpleft': mapping.left = gamepad.buttons[index].pressed; break;
+                case 'dpright': mapping.right = gamepad.buttons[index].pressed; break;
+                case 'leftshoulder': mapping.L1 = gamepad.buttons[index].pressed; break;
+                case 'lefttrigger': mapping.L2 = gamepad.buttons[index].value; break;
+                case 'leftstick': mapping.L3 = gamepad.buttons[index].pressed; break;
+                case 'rightshoulder': mapping.R1 = gamepad.buttons[index].pressed; break;
+                case 'righttrigger': mapping.R2 = gamepad.buttons[index].value; break;
+                case 'rightstick': mapping.R3 = gamepad.buttons[index].pressed; break;
+              }
+            }
+            if(axis) {
+              switch(parts[0]) {
+                case 'leftx': mapping.LX = gamepad.axes[index]; break;
+                case 'lefty': mapping.LY = gamepad.axes[index]; break;
+                case 'rightx': mapping.RX = gamepad.axes[index]; break;
+                case 'righty': mapping.RY = gamepad.axes[index]; break;
+              }
+            }
+            // hat is very problematic, because the web gamepad API does not expose the names of the axes so there is no way to tell which ones are used for it
+            if(hat) {
+              // because I don't know, I'm going to use the last 2 axes for the hat (x and y)
+              // also, I don't really know what I'm doing here. What does .1 .2 .4 .8 really mean?
+              // also, I'm doing this for dpad, so I'm converting the whole thing to boolean with a deadzone
+              if(gamepad.axes.length >= 2) {
+                let sign = 1;
+                if(index == 1) { index = gamepad.axes.length - 1; sign = -1; } // up?
+                if(index == 2) { index = gamepad.axes.length - 2; sign = 1; } // right?
+                if(index == 4) { index = gamepad.axes.length - 1; sign = 1; } // down?
+                if(index == 8) { index = gamepad.axes.length - 2; sign = -1; } // left?
+                if(index == 8) debug_msg += index + " ";
+                switch(parts[0]) {
+                  case 'dpup': mapping.up = gamepad.axes[index] * sign > .15; break;
+                  case 'dpdown': mapping.down = gamepad.axes[index] * sign > .15; break;
+                  case 'dpleft': mapping.left = gamepad.axes[index] * sign > .15; break;
+                  case 'dpright': mapping.right = gamepad.axes[index] * sign > .15; break;
+                }
+              }
             }
           }
         }
@@ -244,7 +285,7 @@ function my_render(t1) {
         HOME: gamepad.buttons.length >= 17? gamepad.buttons[16].pressed : false
       };
     }
-    joy_msg += "south: " + mapping.south + " LY: " + mapping.LY;
+    joy_msg += "south: " + mapping.south + " LY: " + mapping.LY + ` dpad u:${mapping.up} d:${mapping.down} l:${mapping.left} r:${mapping.right}`;
   }
 
   // gfx
