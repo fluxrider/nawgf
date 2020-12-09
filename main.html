@@ -135,27 +135,34 @@ function my_render(t1) {
     let mapping = null;
     if(!gamepad.mapping && gamecontrollerdb) {
       let OS = 'Linux';
+// TODO navigator.userAgent
+// chrome: 5.0 (X11; CrOS armv7l 12371.89.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36
+// firefox: 5.0 (X11; Linux ....)
+// default to linux?
       let vendor = null;
       let product = null;
       let name = null;
       // parse chromium style id
+      {
       let match = gamepad.id.match(/(.*)\s\(Vendor:\s(.*)\sProduct:\s(.*)\).*/); if(match && match[1] && match[2] && match[3]) { name = match[1]; vendor = match[2]; product = match[3]; } else {
       // parse firefox style id
       let match = gamepad.id.match(/(.*)-(.*)-(.*)/); if(match && match[1] && match[2] && match[3]) { name = match[3]; vendor = match[1]; product = match[2]; }
+      }}
+      //debug_msg = `${OS}, ${vendor}, ${product}, ${name}`;
+      if(vendor) {
+        partial_guid = vendor[2] + vendor[3] + vendor[0] + vendor[1] + '0000' + product[2] + product[3] + product[0] + product[1];
+
+        // find entries in gamecontrollerdb that matches
+        let pattern = `.*${partial_guid}(.*)\n`;
+        let re = new RegExp(pattern, "g");
+        let match = gamecontrollerdb.match(re);
+        let line = null;
+        for(const m of match) {
+          if(m.endsWith(OS + ',\n')) line = m;
+        }
+        if(!line) line = m[1]; // pick the first OS if none matched
+        debug_msg = line;
       }
-      debug_msg = `${OS}, ${vendor}, ${product}, ${name}`;
-      // find entry in gamecontrollerdb that matches
-      //let match = 'ac'.match(/a(z)?(c)?/)
-
-//alert( match.length ); // 3
-//alert( match[0] ); // ac (whole match)
-//alert( match[1] ); // undefined, because there's nothing for (z)?
-//alert( match[2] ); // c
-
-// navigator.userAgent
-// chrome: 5.0 (X11; CrOS armv7l 12371.89.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36
-// firefox: 5.0 (X11; Linux ....)
-// default to linux?
     }
     if(!mapping) {
       // cross our fingers falling back to the "standard" mapping
