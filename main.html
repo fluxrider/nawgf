@@ -12,12 +12,13 @@
 @font-face { font-family: 'Alkhemikal'; src: url('alkhemikal_cc_by_jeti_4.0.ttf'); }
 </style>
 <script>
-is_fill = false;
-key_held = false;
-mouse_y = 0;
-mouse_x = 0;
-debug_msg = "";
-aspect = null;
+var is_fill = false;
+var key_held = false;
+var mouse_y = 0;
+var mouse_x = 0;
+var debug_msg = "";
+var aspect = null;
+var gamecontrollerdb = null;
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
@@ -113,15 +114,15 @@ function calculate_fill(w, h, W, H) {
   };
 }
 
-frame = 0;
-t0 = null;
+var frame = 0;
+var t0 = null;
 function my_render(t1) {
   // input
   const gamepads = navigator.getGamepads();
-  debug_msg = "";
+  joy_msg = "";
   for(const gamepad of gamepads) {
     if(!(gamepad && gamepad.connected)) continue;
-    //debug_msg += gamepad.id + " " + gamepad.mapping + " " + gamepad.buttons[0].pressed;
+    //joy_msg += gamepad.id + " " + gamepad.mapping + " " + gamepad.buttons[0].pressed;
     // gamepad.id example:
     //  chromium: "8BitDo N30 Pro 2 (Vendor: 2dc8 Product: 2865)"
     //  firefox: "2dc8-2865-8BitDo N30 Pro 2"
@@ -132,7 +133,29 @@ function my_render(t1) {
     // but SDL south is called a, east -- b, north -- y, select -- back, L1 -- leftshoulder, L2 -- lefttrigger, L3 -- leftstick, the rest is obvious enough
     // the web "standard" numbers can be found at https://www.w3.org/TR/gamepad/standard_gamepad.svg
     let mapping = null;
-    if(!gamepad.mapping) {
+    if(!gamepad.mapping && gamecontrollerdb) {
+      let OS = 'Linux';
+      let vendor = null;
+      let product = null;
+      let name = null;
+      // parse chromium style id
+      let match = gamepad.id.match(/(.*)\s\(Vendor:\s(.*)\sProduct:\s(.*)\).*/); if(match && match[1] && match[2] && match[3]) { name = match[1]; vendor = match[2]; product = match[3]; } else {
+      // parse firefox style id
+      let match = gamepad.id.match(/(.*)-(.*)-(.*)/); if(match && match[1] && match[2] && match[3]) { name = match[3]; vendor = match[1]; product = match[2]; }
+      }
+      debug_msg = `${OS}, ${vendor}, ${product}, ${name}`;
+      // find entry in gamecontrollerdb that matches
+      //let match = 'ac'.match(/a(z)?(c)?/)
+
+//alert( match.length ); // 3
+//alert( match[0] ); // ac (whole match)
+//alert( match[1] ); // undefined, because there's nothing for (z)?
+//alert( match[2] ); // c
+
+// navigator.userAgent
+// chrome: 5.0 (X11; CrOS armv7l 12371.89.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36
+// firefox: 5.0 (X11; Linux ....)
+// default to linux?
     }
     if(!mapping) {
       // cross our fingers falling back to the "standard" mapping
@@ -160,7 +183,7 @@ function my_render(t1) {
         HOME: gamepad.buttons.length >= 17? gamepad.buttons[16].pressed : false
       };
     }
-    debug_msg += "south: " + mapping.south + " LY: " + mapping.LY;
+    joy_msg += "south: " + mapping.south + " LY: " + mapping.LY;
   }
 
   // gfx
@@ -197,7 +220,9 @@ function my_render(t1) {
   g.fillText("t: " + t1, 30, 90);
   g.fillText(`dt: ${dt.toFixed(3)} (${(1/dt).toFixed(1)})`, 30, 120);
   g.fillText(`mouse: ${mouse_x}, ${mouse_y}`, 30, 150);
-  g.fillText(`debug: ${debug_msg}`, 30, 180);
+  g.fillText("gamecontrollerdb: " + (gamecontrollerdb != null), 30, 180);
+  g.fillText(`gamepad: ${joy_msg}`, 30, 210);
+  g.fillText(`debug: ${debug_msg}`, 30, 240);
 
   requestAnimationFrame(my_render);
   t0 = t1;
@@ -226,10 +251,19 @@ document.addEventListener('keyup', function my_keyup(event) {
   }
 });
 
+function my_network() {
+  fetch('https://raw.githubusercontent.com/gabomdq/SDL_GameControllerDB/master/gamecontrollerdb.txt').then(function(response) {
+    return response.text().then(function(text) {
+      gamecontrollerdb = text;
+    });
+  });
+  
+}
 </script>
 </head><body onload="my_onload();">
 <canvas id="my_canvas" width="510" height="270" style="border:1px solid #FF0000;"/></canvas>
 <p onclick="requestAnimationFrame(my_render);">render</p>
 <p onclick="my_fullscreen();">fullscreen</p>
 <p onclick="my_fill_toggle();">fill</p>
+<p onclick="my_network();">network test</p>
 </body></html>
