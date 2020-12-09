@@ -166,8 +166,32 @@ function my_render(t1) {
         debug_msg = line;
 
         // parse SDL mapping, converting it to mine
+        // the hat is problematic, because the web gamepad API does not expose the names of the axes
         // a:b1,b:b0,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b4,y:b3
         if(line) {
+          mapping = {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            north: false,
+            south: false,
+            west: false,
+            east: false,
+            start: false,
+            select: false,
+            L1: false,
+            L2: 0,
+            L3: false,
+            R1: false,
+            R2: 0,
+            R3: false,
+            LX: 0,
+            LY: 0,
+            RX: 0,
+            RY: 0,
+            HOME: false
+          };
           let mappings = line.split(',');
           for(const m of mappings) {
             let parts = m.split(':');
@@ -181,8 +205,14 @@ function my_render(t1) {
             } else if(hat) {
               index = parseFloat(parts[1].slice(1));
             }
+            if(button && index >= gamepad.buttons.length) continue;
+            if(axis && index >= gamepad.axes.length) continue;
+            // switch on SDL mapping
             switch(parts[0]) {
-              case 'a':
+              case 'a': mapping.south = gamepad.buttons[index].pressed; break;
+              case 'b': mapping.east = gamepad.buttons[index].pressed; break;
+              case 'x': mapping.west = gamepad.buttons[index].pressed; break;
+              case 'y': mapping.north = gamepad.buttons[index].pressed; break;
             }
           }
         }
