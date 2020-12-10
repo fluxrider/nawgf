@@ -4,11 +4,15 @@
 <title>Demo</title>
 <link rel="preload" href="alkhemikal_cc_by_jeti_4.0.ttf" as="font" />
 <style>
+/* hide scrollbars as they interfere with 'vw/vh' units */
+body { overflow: hidden; }
+
+/* Nearest-neighbor filter set twice as browsers can't agree on a term */
 #my_canvas {
-  width: 510px; height: 270px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
+
 @font-face { font-family: 'Alkhemikal'; src: url('alkhemikal_cc_by_jeti_4.0.ttf'); }
 </style>
 <script>
@@ -39,7 +43,7 @@ function my_onload() {
   canvas.addEventListener('mousemove', function(event) {
     mouse_y = event.pageY - (canvas.offsetTop + canvas.clientTop);
     mouse_x = event.pageX - (canvas.offsetLeft + canvas.clientLeft);
-    // TODO precalculate taking into account fullscreen letterbox
+    // precalculate taking into account fullscreen letterbox
     let W = canvas.clientWidth; let H = canvas.clientHeight;
     if(document.fullscreenElement && aspect) {
       W = aspect.w; H = aspect.h;
@@ -88,7 +92,7 @@ function my_fill() {
     const a = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
     canvas.style.width = (a.w / canvas.clientWidth * 100) + "vw";
     canvas.style.height = (a.h / canvas.clientHeight * 100) + "vh";
-    // TODO this is sometime flush, but in other times there are sliders
+    // note: this only works because I disabled scrollbars on the body element
   } else {
     canvas.style.width = canvas.width + "px";
     canvas.style.height = canvas.height + "px";
