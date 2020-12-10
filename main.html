@@ -20,6 +20,7 @@ var debug_msg = "";
 var aspect = null;
 var gamecontrollerdb = null;
 var gamecontrollerdb_line_for_device = {};
+const preferred_width = 510; const preferred_height = 270;
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
@@ -40,7 +41,7 @@ function my_onload() {
     mouse_x = event.pageX - (canvas.offsetLeft + canvas.clientLeft);
     // TODO precalculate taking into account fullscreen letterbox
     let W = canvas.clientWidth; let H = canvas.clientHeight;
-    if(document.fullscreenElement) {
+    if(document.fullscreenElement && aspect) {
       W = aspect.w; H = aspect.h;
       mouse_y -= aspect.y;
       mouse_x -= aspect.x;
@@ -62,10 +63,9 @@ function my_fullscreen() {
 }
 function my_fill_toggle() {
   let canvas = document.getElementById("my_canvas");
+  is_fill = !is_fill;
   // unfill window
-  if(is_fill) {
-    canvas.style.width = "510px";
-    canvas.style.height = "270px";
+  if(!is_fill) {
     canvas.style.border = (document.fullscreenElement != null)? 0 : "1px solid rgb(255, 0, 0)";
     // reset margin and padding
     document.body.style.margin = ""; document.body.style.padding = "";
@@ -74,20 +74,26 @@ function my_fill_toggle() {
   else {
     canvas.style.border = 0;
     document.body.style.margin = 0; document.body.style.padding = 0;
-    my_fill();
   }
-  is_fill = !is_fill;
+  my_fill();
 }
+
 function my_fill() {
   let canvas = document.getElementById("my_canvas");
-  canvas.style.width = "100vw";
-  canvas.style.height = "100vh";
+  if(is_fill) {
+    canvas.style.width = "100vw";
+    canvas.style.height = "100vh";
 
-  // respect aspect ratio of canvas buffer
-  const {aspectH, aspectW, offsetY, offsetX} = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
-  canvas.style.width = (aspectW / canvas.clientWidth * 100) + "vw";
-  canvas.style.height = (aspectH / canvas.clientHeight * 100) + "vh";
-  // TODO this is sometime flush, but in other times there are sliders
+    // respect aspect ratio of canvas buffer
+    const {aspectH, aspectW, offsetY, offsetX} = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
+    canvas.style.width = (aspectW / canvas.clientWidth * 100) + "vw";
+    canvas.style.height = (aspectH / canvas.clientHeight * 100) + "vh";
+    debug_msg = `${canvas.style.width} ${canvas.style.height}`;
+    // TODO this is sometime flush, but in other times there are sliders
+  } else {
+    canvas.style.width = canvas.width + "px";
+    canvas.style.height = canvas.height + "px";
+  }
 }
 
 function calculate_fill(w, h, W, H) {
@@ -113,6 +119,24 @@ function calculate_fill(w, h, W, H) {
     y: offsetY,
     x: offsetX
   };
+}
+
+function my_fudge_viewport() {
+  // enlarge canvas buffer to fit the aspect ratio of the available space (to avoid blackbar, at the cost of complexity of non-fixed resolution)
+  let W = document.documentElement.clientWidth; let H = document.documentElement.clientHeight; let A = W / H;
+  let w = preferred_width; let h = preferred_height; let a = w / h;
+  let canvas = document.getElementById("my_canvas");
+  // canvas too wide, increase height to meet aspect ratio
+  if(a > A) {
+    canvas.width = w;
+    canvas.height = w / A;
+  }
+  // canvas too tall, increase width to meet aspect ratio
+  else {
+    canvas.width = h * A;
+    canvas.height = h;
+  }
+  my_fill();
 }
 
 var frame = 0;
@@ -241,7 +265,6 @@ function my_render(t1) {
                 if(index == 2) { index = gamepad.axes.length - 2; sign = 1; } // right?
                 if(index == 4) { index = gamepad.axes.length - 1; sign = 1; } // down?
                 if(index == 8) { index = gamepad.axes.length - 2; sign = -1; } // left?
-                if(index == 8) debug_msg += index + " ";
                 switch(parts[0]) {
                   case 'dpup': mapping.up = gamepad.axes[index] * sign > .15; break;
                   case 'dpdown': mapping.down = gamepad.axes[index] * sign > .15; break;
@@ -336,6 +359,7 @@ window.addEventListener('resize', function() {
 });
 
 document.addEventListener('keydown', function my_keydown(event) {
+  // right
   if(event.keyCode == 39) {
     key_held = true;
     event.preventDefault();
@@ -344,6 +368,11 @@ document.addEventListener('keydown', function my_keydown(event) {
 document.addEventListener('keyup', function my_keyup(event) {
   if(event.keyCode == 39) {
     key_held = false;
+    event.preventDefault();
+  }
+  // v
+  if(event.keyCode == 86) {
+    my_fudge_viewport();
     event.preventDefault();
   }
 });
