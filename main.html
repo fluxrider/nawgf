@@ -19,6 +19,7 @@ var mouse_x = 0;
 var debug_msg = "";
 var aspect = null;
 var gamecontrollerdb = null;
+var gamecontrollerdb_line_for_device = {};
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
@@ -118,41 +119,48 @@ var frame = 0;
 var t0 = null;
 function my_render(t1) {
   // input
+  let joy_msg = "";
   const gamepads = navigator.getGamepads();
   for(const gamepad of gamepads) {
     if(!(gamepad && gamepad.connected)) continue;
     // when the mapping is not set to "standard", I parse the SDL2 gamecontrollerdb, which use a xbox controller standard.
     let mapping = null;
-    if(!gamepad.mapping && gamecontrollerdb) {
-      let OS = 'Linux';
-      // TODO navigator.userAgent
-      // chrome: 5.0 (X11; CrOS armv7l 12371.89.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36
-      // firefox: 5.0 (X11; Linux ....)
-      // default to linux?
-      let vendor = null;
-      let product = null;
-      let name = null;
-      // parse chromium style id e.g "8BitDo N30 Pro 2 (Vendor: 2dc8 Product: 2865)"
-      {
-      let match = gamepad.id.match(/(.*)\s\(Vendor:\s(.*)\sProduct:\s(.*)\).*/); if(match && match[1] && match[2] && match[3]) { name = match[1]; vendor = match[2]; product = match[3]; } else {
-      // parse firefox style id e.g. "2dc8-2865-8BitDo N30 Pro 2"
-      let match = gamepad.id.match(/(.*)-(.*)-(.*)/); if(match && match[1] && match[2] && match[3]) { name = match[3]; vendor = match[1]; product = match[2]; }
-      }}
-      if(vendor) {
-        partial_guid = vendor[2] + vendor[3] + vendor[0] + vendor[1] + '0000' + product[2] + product[3] + product[0] + product[1];
+    if(!gamepad.mapping) {
+      if(gamecontrollerdb && !gamecontrollerdb_line_for_device[gamepad.id]) {
+        gamecontrollerdb_line_for_device[gamepad.id] = "failed";
+        let OS = 'Linux';
+        // TODO navigator.userAgent
+        // chrome: 5.0 (X11; CrOS armv7l 12371.89.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36
+        // firefox: 5.0 (X11; Linux ....)
+        // default to linux?
+        let vendor = null;
+        let product = null;
+        let name = null;
+        // parse chromium style id e.g "8BitDo N30 Pro 2 (Vendor: 2dc8 Product: 2865)"
+        {
+        let match = gamepad.id.match(/(.*)\s\(Vendor:\s(.*)\sProduct:\s(.*)\).*/); if(match && match[1] && match[2] && match[3]) { name = match[1]; vendor = match[2]; product = match[3]; } else {
+        // parse firefox style id e.g. "2dc8-2865-8BitDo N30 Pro 2"
+        let match = gamepad.id.match(/(.*)-(.*)-(.*)/); if(match && match[1] && match[2] && match[3]) { name = match[3]; vendor = match[1]; product = match[2]; }
+        }}
+        if(vendor) {
+          partial_guid = vendor[2] + vendor[3] + vendor[0] + vendor[1] + '0000' + product[2] + product[3] + product[0] + product[1];
 
-        // find entries in gamecontrollerdb that matches
-        let pattern = `.*${partial_guid}(.*)\n`;
-        let re = new RegExp(pattern, "g");
-        let match = gamecontrollerdb.match(re);
-        let line = null;
-        if(match) {
-          for(const m of match) {
-            if(m.endsWith(OS + ',\n')) line = m;
+          // find entries in gamecontrollerdb that matches
+          let pattern = `.*${partial_guid}(.*)\n`;
+          let re = new RegExp(pattern, "g");
+          let match = gamecontrollerdb.match(re);
+          let line = null;
+          if(match) {
+            for(const m of match) {
+              if(m.endsWith(OS + ',\n')) line = m;
+            }
+            if(!line) line = m[1]; // pick the first OS if none matched
           }
-          if(!line) line = m[1]; // pick the first OS if none matched
+          gamecontrollerdb_line_for_device[gamepad.id] = line;
         }
-
+      }
+      if(gamecontrollerdb_line_for_device[gamepad.id] && gamecontrollerdb_line_for_device[gamepad.id] != "failed") {
+        let line = gamecontrollerdb_line_for_device[gamepad.id];
         // parse SDL mapping, converting it to mine
         if(line) {
           mapping = {
