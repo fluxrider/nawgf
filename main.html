@@ -85,10 +85,9 @@ function my_fill() {
     canvas.style.height = "100vh";
 
     // respect aspect ratio of canvas buffer
-    const {aspectH, aspectW, offsetY, offsetX} = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
-    canvas.style.width = (aspectW / canvas.clientWidth * 100) + "vw";
-    canvas.style.height = (aspectH / canvas.clientHeight * 100) + "vh";
-    debug_msg = `${canvas.style.width} ${canvas.style.height}`;
+    const a = calculate_fill(canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight);
+    canvas.style.width = (a.w / canvas.clientWidth * 100) + "vw";
+    canvas.style.height = (a.h / canvas.clientHeight * 100) + "vh";
     // TODO this is sometime flush, but in other times there are sliders
   } else {
     canvas.style.width = canvas.width + "px";
