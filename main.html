@@ -73,13 +73,22 @@ function my_onload() {
   });
 }
 
-function my_fullscreen() {
-  //alert(document.fullscreenEnabled);
-  let canvas = document.getElementById("my_canvas");
-  canvas.requestFullscreen().catch(err => {
-    alert("Error attempting to enable full-screen mode: " + err.message + " " + err.name);
-  });
+function my_fullscreen_toggle() {
+  if(!document.fullscreenEnabled) return;
+
+  // come back from fullscreen
+  if(document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+  // go into fullscreen
+  else {
+    let canvas = document.getElementById("my_canvas");
+    canvas.requestFullscreen().catch(err => {
+      alert("Error attempting to enable full-screen mode: " + err.message + " " + err.name);
+    });
+  } 
 }
+
 function my_fill_toggle() {
   let canvas = document.getElementById("my_canvas");
   is_fill = !is_fill;
@@ -167,7 +176,16 @@ function my_render(t1) {
     if(!(gamepad && gamepad.connected)) continue;
     // when the mapping is not set to "standard", I parse the SDL2 gamecontrollerdb, which use a xbox controller standard.
     let mapping = null;
+    let reliable = true;
     if(!gamepad.mapping) {
+      // fetch the database (this will take time, so for a few seconds the controller mapping will be undefined)
+      if(!gamecontrollerdb) {
+        fetch('https://raw.githubusercontent.com/gabomdq/SDL_GameControllerDB/master/gamecontrollerdb.txt').then(function(response) {
+          return response.text().then(function(text) {
+            gamecontrollerdb = text;
+          }).catch(err => { alert("Error attempting to read gamecontrollerdb as utf-8: " + err.message + " " + err.name); gamecontrollerdb = "failed"; });
+        }).catch(err => { alert("Error attempting to fetch gamecontrollerdb: " + err.message + " " + err.name); gamecontrollerdb = "failed"; });
+      }
       if(gamecontrollerdb && !gamecontrollerdb_line_for_device[gamepad.id]) {
         gamecontrollerdb_line_for_device[gamepad.id] = "failed";
         let OS = 'Linux';
@@ -293,7 +311,7 @@ function my_render(t1) {
             }
           }
         }
-      }
+      } else { reliable = false; }
     }
     if(!mapping) {
       // cross our fingers falling back to the "standard" mapping
@@ -321,7 +339,7 @@ function my_render(t1) {
         HOME: gamepad.buttons.length >= 17? gamepad.buttons[16].pressed : false
       };
     }
-    joy_msg = "south: " + mapping.south + " LY: " + mapping.LY + ` dpad u:${mapping.up} d:${mapping.down} l:${mapping.left} r:${mapping.right}`;
+    joy_msg = reliable + " south: " + mapping.south + " LY: " + mapping.LY + ` dpad u:${mapping.up} d:${mapping.down} l:${mapping.left} r:${mapping.right}`;
   }
 
   // gfx
@@ -359,7 +377,7 @@ function my_render(t1) {
 
   // fullscreen / fullwindow buttons
   my_draw_image(g, 'fullscreen.png', w, h, 'bottom', 'right');
-  my_draw_image(g, 'fullwindow.png', w - 32, h, 'bottom', 'right');
+  if(!document.fullscreenElement) my_draw_image(g, 'fullwindow.png', w - 32, h, 'bottom', 'right');
 
   requestAnimationFrame(my_render);
   t0 = t1;
@@ -394,8 +412,24 @@ document.addEventListener('keydown', function my_keydown(event) {
   }
 });
 document.addEventListener('keyup', function my_keyup(event) {
+  // right
   if(event.keyCode == 39) {
     key_held = false;
+    event.preventDefault();
+  }
+  // f
+  if(event.keyCode == 70) {
+    my_fullscreen_toggle();
+    event.preventDefault();
+  }
+  // s (tmp)
+  if(event.keyCode == 83) {
+    requestAnimationFrame(my_render);
+    event.preventDefault();
+  }
+  // t
+  if(event.keyCode == 84) {
+    my_fill_toggle();
     event.preventDefault();
   }
   // v
@@ -405,19 +439,7 @@ document.addEventListener('keyup', function my_keyup(event) {
   }
 });
 
-function my_network() {
-  fetch('https://raw.githubusercontent.com/gabomdq/SDL_GameControllerDB/master/gamecontrollerdb.txt').then(function(response) {
-    return response.text().then(function(text) {
-      gamecontrollerdb = text;
-    });
-  });
-  
-}
 </script>
 </head><body onload="my_onload();">
 <canvas id="my_canvas" width="960" height="600" style="border:1px solid #FF0000;"/></canvas>
-<p onclick="requestAnimationFrame(my_render);">render</p>
-<p onclick="my_fullscreen();">fullscreen</p>
-<p onclick="my_fill_toggle();">fill</p>
-<p onclick="my_network();">network test</p>
 </body></html>
