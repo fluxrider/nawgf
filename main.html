@@ -24,10 +24,14 @@ var debug_msg = "";
 var aspect = null;
 var gamecontrollerdb = null;
 var gamecontrollerdb_line_for_device = {};
-const preferred_width = 510; const preferred_height = 270;
+var preferred_buffer_width = -1;
+var preferred_buffer_height = -1;
+var images = {}
 
 function my_onload() {
   let canvas = document.getElementById("my_canvas");
+  preferred_buffer_width = canvas.width;
+  preferred_buffer_height = canvas.height;
   canvas.addEventListener('fullscreenchange', (event) => {
     // on enter fullscreen
     if(document.fullscreenElement) {
@@ -55,6 +59,17 @@ function my_onload() {
     mouse_x = mouse_x * canvas.width / W;
     if(mouse_x < 0) mouse_x = 0; if(mouse_x > canvas.width) mouse_x = canvas.width;
     if(mouse_y < 0) mouse_y = 0; if(mouse_y > canvas.height) mouse_y = canvas.height;
+  });
+  // load some images
+  [
+    'fullscreen.png',
+    'fullwindow.png'
+  ].forEach(function(path) {
+    let image = new Image();
+    image.onload = function () {
+      images[path] = image;
+    }
+    image.src = path;
   });
 }
 
@@ -127,7 +142,7 @@ function calculate_fill(w, h, W, H) {
 function my_fudge_viewport() {
   // enlarge canvas buffer to fit the aspect ratio of the available space (to avoid blackbar, at the cost of complexity of non-fixed resolution)
   let W = document.documentElement.clientWidth; let H = document.documentElement.clientHeight; let A = W / H;
-  let w = preferred_width; let h = preferred_height; let a = w / h;
+  let w = preferred_buffer_width; let h = preferred_buffer_height; let a = w / h;
   let canvas = document.getElementById("my_canvas");
   // canvas too wide, increase height to meet aspect ratio
   if(a > A) {
@@ -327,13 +342,8 @@ function my_render(t1) {
   g.fillRect(0, 0, w, h);
   g.fillStyle = grd;
   g.fillRect(10, 10, w - 20, h - 20);
-  
-  //var image = new Image();
-  //image.onload = function () {
-  //  g.drawImage(image, 0, 0);
-  //}
-  //image.src = 'cat.png';
 
+  // debug text
   g.font = '18px Alkhemikal';
   g.fillStyle = "black";
   g.strokeStyle = "white";
@@ -347,8 +357,23 @@ function my_render(t1) {
   g.fillText(`gamepad: ${joy_msg}`, 30, 210);
   g.fillText(`debug: ${debug_msg}`, 30, 240);
 
+  // fullscreen / fullwindow buttons
+  my_draw_image(g, 'fullscreen.png', w, h, 'bottom', 'right');
+  my_draw_image(g, 'fullwindow.png', w - 52, h, 'bottom', 'right');
+
   requestAnimationFrame(my_render);
   t0 = t1;
+}
+
+function my_draw_image(g, path, x, y, v_anchor, h_anchor) {
+  let image = images[path];
+  if(!image) return false;
+  if(v_anchor == 'bottom') y -= image.height;
+  if(v_anchor == 'center') y -= image.height / 2;
+  if(h_anchor == 'right') x -= image.width;
+  if(h_anchor == 'center') x -= image.width / 2;
+  g.drawImage(image, x, y);
+  return true;
 }
 
 window.addEventListener('resize', function() {
@@ -390,7 +415,7 @@ function my_network() {
 }
 </script>
 </head><body onload="my_onload();">
-<canvas id="my_canvas" width="510" height="270" style="border:1px solid #FF0000;"/></canvas>
+<canvas id="my_canvas" width="960" height="600" style="border:1px solid #FF0000;"/></canvas>
 <p onclick="requestAnimationFrame(my_render);">render</p>
 <p onclick="my_fullscreen();">fullscreen</p>
 <p onclick="my_fill_toggle();">fill</p>
