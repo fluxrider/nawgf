@@ -437,6 +437,35 @@ document.addEventListener('keyup', function my_keyup(event) {
     my_fudge_viewport();
     event.preventDefault();
   }
+  // a
+  if(event.keyCode == 65) {
+    // procedural audio test
+    const s = new AudioContext();
+    let oscillator = s.createOscillator();
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(440, s.currentTime);
+    let gain = s.createGain();
+    gain.gain.setValueAtTime(.01, s.currentTime);
+    oscillator.connect(gain);
+    gain.connect(s.destination);
+    oscillator.start();
+    oscillator.frequency.setValueAtTime(400, s.currentTime + .5);
+    oscillator.stop(s.currentTime + 1);
+
+    // buffered audio test (only works if running in a webserver)
+    fetch('oh_yeah.ogg').then(function(response) {
+      return response.arrayBuffer().then(function(array) {
+        s.decodeAudioData(array).then(function(buffer) {
+          let source = s.createBufferSource();
+          source.buffer = buffer;
+          source.connect(s.destination);
+          source.start();
+        }).catch(err => { alert("Error attempting to decode audio array buffer: " + err.message + " " + err.name); });
+      }).catch(err => { alert("Error attempting to read audio file response as array buffer: " + err.message + " " + err.name); });
+    }).catch(err => { alert("Error attempting to fetch audio file: " + err.message + " " + err.name); });
+
+    // streaming audio test
+  }
 });
 
 </script>
