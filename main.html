@@ -465,6 +465,17 @@ document.addEventListener('keyup', function my_keyup(event) {
     }).catch(err => { alert("Error attempting to fetch audio file: " + err.message + " " + err.name); });
 
     // streaming audio test
+    let audio_tag = new Audio('oh_yeah.ogg');
+    audio_tag.addEventListener('loadeddata', () => {
+      let source = s.createMediaElementSource(audio_tag);
+      let gain = s.createGain();
+      gain.gain.setValueAtTime(.2, s.currentTime);
+      source.connect(gain);
+      gain.connect(s.destination);
+      audio_tag.play();
+    })
+    audio_tag.loop = true;
+    audio_tag.src = 'oh_yeah.ogg';
   }
 });
 
